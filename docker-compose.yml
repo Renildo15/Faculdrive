@@ -1,28 +1,104 @@
+name: faculdrive
+
 services:
-  web:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    command: /app/commands.sh
-    volumes:
-      - .:/app
+  app:
+    build: .
+    image: faculdrive-app-image
+    container_name: faculdrive-app
+    command: >
+      sh -c "
+        chmod +x /app/commands.sh 2>/dev/null || true &&
+        if [ -f /app/commands.sh ]; then
+          /app/commands.sh
+        else
+          echo 'Starting Django server...' &&
+          python manage.py runserver 0.0.0.0:8000
+        fi"
     ports:
       - "8000:8000"
-    env_file:
-      - .env
-    depends_on:
-      - db
-
-  db:
-    image: postgres:15-alpine
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - .:/app
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:15
+    container_name: faculdrive-db
+    ports:
+      - "5432:5432"
     environment:
       POSTGRES_DB: postgres
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: "redis:7-alpine"
+    container_name: faculdrive-redis
+    restart: unless-stopped
     ports:
-      - 5432:5432
+      - "6378:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+
+  celery:
+    build: .
+    image: faculdrive-celery-image
+    container_name: faculdrive-celery
+    command: celery -A core worker -E -l info
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - postgres
+      - redis
+      - app
+
+  flower:
+    build: .
+    image: faculdrive-app
+    container_name: faculdrive-flower
+    command: celery -A core flower --broker=redis://redis:6379/0 --basic_auth=admin:password123
+    ports:
+      - "5555:5555"
+    env_file:
+      - .env
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+      - celery
+
+  beat:
+    build: .
+    image: faculdrive-app
+    container_name: faculdrive-beat
+    command: celery -A core beat -l INFO
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - redis
+      - app
 
 volumes:
   postgres_data:
+  redis_data:

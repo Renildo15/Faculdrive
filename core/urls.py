@@ -6,7 +6,7 @@ from drf_spectacular.views import (SpectacularAPIView, SpectacularRedocView,
                                    SpectacularSwaggerView)
 from rest_framework_simplejwt.views import TokenRefreshView
 
-from api.views import MyTokenObtainPairView
+from auth_app.views import MyTokenObtainPairView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
