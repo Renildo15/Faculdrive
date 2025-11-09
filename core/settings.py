@@ -51,7 +51,8 @@ INSTALLED_APPS = [
     "django_celery_beat",
     "django_cleanup.apps.CleanupConfig",
     "user_app",
-    "auth_app"
+    "auth_app",
+    "file_app"
 ]
 
 MIDDLEWARE = [
@@ -106,24 +107,24 @@ WSGI_APPLICATION = "core.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.sqlite3",
-#         "NAME": BASE_DIR / "db.sqlite3",
-#     }
-# }
-
-
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": config("DB_NAME"),
-        "USER": config("DB_USER"),
-        "PASSWORD": config("DB_PASSWORD"),
-        "HOST": config("DB_HOST"),
-        "PORT": config("DB_PORT"),
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
+
+
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "NAME": config("DB_NAME"),
+#         "USER": config("DB_USER"),
+#         "PASSWORD": config("DB_PASSWORD"),
+#         "HOST": config("DB_HOST"),
+#         "PORT": config("DB_PORT"),
+#     }
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -251,11 +252,11 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "America/Sao_Paulo"
 
-CELERY_BEAT_SCHEDULE = {
-    'enviar_email_diario': {
-        'task': 'core.tasks.enviar_email_assincrono',
-        'schedule': 10.0,
-        # 'schedule': crontab(hour=8, minute=0),
-        'args': ('renildorabi22@gmail.com', "EMAIL TESTE",'Bom dia! Este é o e-mail diário.'),
-    },
-}
+# CELERY_BEAT_SCHEDULE = {
+#     'enviar_email_diario': {
+#         'task': 'core.tasks.enviar_email_assincrono',
+#         'schedule': 10.0,
+#         # 'schedule': crontab(hour=8, minute=0),
+#         'args': ('renildorabi22@gmail.com', "EMAIL TESTE",'Bom dia! Este é o e-mail diário.'),
+#     },
+# }

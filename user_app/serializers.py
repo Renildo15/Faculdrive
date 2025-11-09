@@ -12,7 +12,7 @@ from .validators import *
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = "__all__"
+        exclude = ["password", "date_joined", "groups", "user_permissions", "last_login"]
 
 
 class UserStudentRegisterSerializer(serializers.ModelSerializer):
