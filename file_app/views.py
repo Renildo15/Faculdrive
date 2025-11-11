@@ -10,8 +10,8 @@ from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework.decorators import api_view, permission_classes, parser_classes
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.response import Response
-from file_app.models import Archive
-from file_app.serializers import ArchiveSerializer, CreateArchiveSerializer
+from file_app.models import Archive, Tag
+from file_app.serializers import ArchiveSerializer, CreateArchiveSerializer, TagSerializer, CreateTagSerializer
 from file_app.tasks import process_archive_task
 # Create your views here.
 #
@@ -92,3 +92,47 @@ def delete_archive_view(request, archive_id):
     archive.delete()
 
     return Response(status=status.HTTP_204_NO_CONTENT)
+
+@api_view(["PATCH"])
+@permission_classes([IsAuthenticated])
+def update_archive_view(request, archive_id):
+    archive = get_object_or_404(Archive, id=archive_id)
+    if archive.user != request.user:
+        return Response(data={"message": "Você não tem permissão para acessar este arquivo."}, status=status.HTTP_403_FORBIDDEN)
+    serializer = CreateArchiveSerializer(archive, data=request.data, partial=True)
+
+    if serializer.is_valid():
+        serializer.save()
+        data = {"message": "Arquivo atualizado com sucesso!"}
+        return Response(data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@extend_schema(
+    request=CreateTagSerializer,
+    responses={201: TagSerializer}
+)
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def create_tag_view(request):
+    serializer = CreateTagSerializer(data=request.data)
+    if request.user.is_staff:
+        return Response(data={"message": "Você não tem permissão para está ação."}, status=status.HTTP_403_FORBIDDEN)
+    if serializer.is_valid():
+        serializer.save()
+
+        return Response(data=serializer.data, status=status.HTTP_201_CREATED)
+    else:
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@extend_schema(
+    responses={200: TagSerializer}
+)
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def list_all_tags_view(request):
+    tags = Tag.objects.all()
+    serializer = TagSerializer(tags, many=True)
+
+    data = {"tags": serializer.data}
+    return Response(data, status=status.HTTP_200_OK)

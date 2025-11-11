@@ -9,6 +9,10 @@ class TagSerializer(serializers.ModelSerializer):
         model = Tag
         fields = "__all__"
 
+class CreateTagSerializer(TagSerializer):
+    class Meta(TagSerializer.Meta):
+        fields = ["name"]
+
 class CreateArchiveSerializer(serializers.ModelSerializer):
     file = serializers.FileField(required=True)
     tags = TagSerializer(many=True)
