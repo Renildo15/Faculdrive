@@ -16,6 +16,7 @@ class Archive(models.Model):
     description = models.TextField()
     file = models.FileField(upload_to ='uploads/%Y/%m/%d/')
     is_public = models.BooleanField(default=False)
+    processed = models.BooleanField(default=False)
     upload_at = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
 
