@@ -10,6 +10,11 @@ class CreateCommentSerializer(serializers.ModelSerializer):
 
 class CommentSerializer(serializers.ModelSerializer):
     user = UserSerializer()
+    replies = serializers.SerializerMethodField()
     class Meta:
         model = Comment
-        fields = "__all__"
+        fields = ["id", "comment", "created_at", "user", "archive", "replies"]
+
+    def get_replies(self, obj):
+        replies = obj.replies.all().order_by("created_at")
+        return CommentSerializer(replies, many=True).data

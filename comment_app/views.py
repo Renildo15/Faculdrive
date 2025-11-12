@@ -39,11 +39,34 @@ def create_comment_view(request, archive_id):
     else:
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+@extend_schema(
+    request=CreateCommentSerializer,
+    responses={201: CommentSerializer}
+)
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def create_reply_comment_view(request, comment_id):
+    parent_comment = get_object_or_404(Comment, id=comment_id)
+    serializer = CreateCommentSerializer(data=request.data)
+
+    if serializer.is_valid():
+        reply = serializer.save(
+            user=request.user,
+            archive=parent_comment.archive,
+            parent=parent_comment
+        )
+        data = {"message": "Resposta adicionada!", "comment":CommentSerializer(reply).data}
+        return Response(data, status=status.HTTP_201_CREATED)
+    else:
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def get_all_comments(request, archive_id):
     archive = get_object_or_404(Archive, id = archive_id)
-    comments = Comment.objects.filter(archive=archive).order_by("-created_at")
+    comments = Comment.objects.filter(archive=archive, parent__isnull=True).order_by("-created_at")
 
     paginator = CommentPagination()
     paginated_comments = paginator.paginate_queryset(comments, request)
