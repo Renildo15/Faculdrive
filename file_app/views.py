@@ -1,14 +1,11 @@
 
 from django.http import FileResponse, Http404
-import os
-from django.conf import settings
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
-from rest_framework import permissions
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework.decorators import api_view, permission_classes, parser_classes
-from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from file_app.models import Archive, Tag
 from file_app.serializers import ArchiveSerializer, CreateArchiveSerializer, TagSerializer, CreateTagSerializer

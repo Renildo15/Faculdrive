@@ -52,7 +52,8 @@ INSTALLED_APPS = [
     "django_cleanup.apps.CleanupConfig",
     "user_app",
     "auth_app",
-    "file_app"
+    "file_app",
+    "comment_app"
 ]
 
 MIDDLEWARE = [
