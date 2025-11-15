@@ -115,3 +115,23 @@ def update_comment_view(request, comment_id):
         )
     
     return Response(serializer.erros, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def like_comment_view(request, comment_id):
+    comment = get_object_or_404(Comment,id=comment_id)
+    user = request.user
+
+    if user in comment.likes.all():
+        comment.likes.remove(user)
+
+        return Response(
+            {"message": "Like removido.", "likes_count": comment.likes.count()},
+            status=status.HTTP_200_OK
+        )
+    comment.likes.add(user)
+
+    return Response(
+        {"message": "Comentário curtido!", "likes_count": comment.likes.count()},
+        status=status.HTTP_201_CREATED
+    )
