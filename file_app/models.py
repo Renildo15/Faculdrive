@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 class Tag(models.Model):
     name = models.CharField(max_length = 200)
@@ -29,3 +30,21 @@ class Archive(models.Model):
 
     def __str__(self):
         return f"{self.user.username if self.user else 'Sem usuário'} - {self.name_file}"
+
+class Review(models.Model):
+    archive = models.ForeignKey(Archive, on_delete=models.CASCADE, related_name="reviews")
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="reviews")
+    stars = models.IntegerField(
+        default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(5)]
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "review"
+        verbose_name = "Review"
+        verbose_name_plural = "Reviews"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.user.username if self.user else 'Sem usuário'} - {self.archive.name_file} - {self.stars}"

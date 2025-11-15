@@ -1,7 +1,7 @@
 
 from rest_framework import serializers
 
-from file_app.models import Archive, Tag
+from file_app.models import Archive, Tag, Review
 from user_app.serializers import UserSerializer
 
 class TagSerializer(serializers.ModelSerializer):
@@ -49,3 +49,14 @@ class ArchiveSerializer(serializers.ModelSerializer):
     class Meta:
         model = Archive
         fields = "__all__"
+
+class ReviewSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+    archive = ArchiveSerializer()
+    class Meta:
+        model = Review
+        fields = '__all__'
+
+class CreateReviewSerializer(ReviewSerializer):
+    class Meta(ReviewSerializer.Meta):
+        fields = ['stars']

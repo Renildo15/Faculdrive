@@ -7,9 +7,10 @@ from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework.decorators import api_view, permission_classes, parser_classes
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
-from file_app.models import Archive, Tag
-from file_app.serializers import ArchiveSerializer, CreateArchiveSerializer, TagSerializer, CreateTagSerializer
+from file_app.models import Archive, Tag, Review
+from file_app.serializers import ArchiveSerializer, CreateArchiveSerializer, TagSerializer, CreateTagSerializer, CreateReviewSerializer, ReviewSerializer
 from file_app.tasks import process_archive_task
+from django.db.models import Avg
 # Create your views here.
 #
 @api_view(["GET"])
@@ -41,7 +42,7 @@ def list_only_public_archives_view(request):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 @parser_classes([MultiPartParser])
-def create_archive(request):
+def create_archive_view(request):
     serializer = CreateArchiveSerializer(data=request.data)
     if serializer.is_valid():
         archive = serializer.save(user=request.user)
@@ -53,13 +54,12 @@ def create_archive(request):
 
 @api_view(["GET"])
 @permission_classes([AllowAny])
-def get_archive(request, archive_id):
+def get_archive_view(request, archive_id):
     archive = get_object_or_404(Archive, id=archive_id)
     if not archive.is_public and not request.user.is_staff:
         return Response(data={"message": "Você não tem permissão para acessar este arquivo."}, status=status.HTTP_403_FORBIDDEN)
     serializer = ArchiveSerializer(archive)
 
-    serializer = ArchiveSerializer(archive)
     return Response({"archive": serializer.data}, status=status.HTTP_200_OK)
 
 @api_view(["GET"])
@@ -133,3 +133,49 @@ def list_all_tags_view(request):
 
     data = {"tags": serializer.data}
     return Response(data, status=status.HTTP_200_OK)
+
+
+
+@extend_schema(
+    request=CreateReviewSerializer,
+    responses={201: ReviewSerializer}
+)
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def create_review_view(request, archive_id):
+    archive = get_object_or_404(Archive, id=archive_id)
+    user = request.user
+
+
+    if Review.objects.filter(archive=archive, user=user).exists():
+        return Response(
+            {"message": "Você já avaliou este arquivo."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    serializer = CreateReviewSerializer(data=request.data)
+
+    if serializer.is_valid():
+        serializer.save(archive=archive, user=user)
+
+        return Response(
+            {"message": "Avaliação adicionada!"},
+            status=status.HTTP_201_CREATED
+        )
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def get_reviews_view(request, archive_id):
+    reviews = Review.objects.filter(archive_id=archive_id)
+    serializer = ReviewSerializer(reviews, many=True)
+
+    avg_stars = reviews.aggregate(avg_stars=Avg("stars"))["avg_stars"]
+
+    return Response(
+        {
+            "reviews": serializer.data,
+            "average": avg_stars if avg_stars else 0
+        },
+        status=status.HTTP_200_OK
+    )
