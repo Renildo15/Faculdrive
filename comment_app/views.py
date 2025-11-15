@@ -73,3 +73,45 @@ def get_all_comments(request, archive_id):
     serializer = CommentSerializer(paginated_comments, many=True)
 
     return paginator.get_paginated_response(serializer.data)
+
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def delete_comment_view(request, comment_id):
+    comment = get_object_or_404(Comment, id=comment_id)
+
+    if request.user != comment.user and not request.user.is_staff:
+        return Response(
+            {"message": "Você não tem permissão para deletar esse comentario."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+    
+    comment.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@extend_schema(
+    request=CreateCommentSerializer,
+    responses={201: CommentSerializer}
+)
+@api_view(["PATCH"])
+@permission_classes([IsAuthenticated])
+def update_comment_view(request, comment_id):
+    comment = get_object_or_404(Comment, id=comment_id)
+
+    if request.user != comment.user:
+        return Response(
+            {"message": "Você não tem permissão para editar esse comentario."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    serializer = CreateCommentSerializer(comment, data=request.data, partial=True)
+
+    if serializer.is_valid():
+        serializer.save()
+
+        return Response(
+            {"message": "Comentário atualizado com sucesso!"},
+            status=status.HTTP_200_OK
+        )
+    
+    return Response(serializer.erros, status=status.HTTP_400_BAD_REQUEST)
