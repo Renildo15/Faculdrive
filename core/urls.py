@@ -12,8 +12,8 @@ from auth_app.views import MyTokenObtainPairView
 urlpatterns = [
     path("", lambda request: redirect("api/swagger/", permanent=False)),
     path("admin/", admin.site.urls),
-    path("api/login/", MyTokenObtainPairView.as_view(), name="token_obtain_pair"),
-    path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    path("api/users/login/", MyTokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("api/users/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(
         "api/swagger/",
@@ -23,6 +23,7 @@ urlpatterns = [
     path("api/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
     path("api/archives/", include("file_app.urls")),
     path("api/comments/", include("comment_app.urls")),
+    path("api/users/", include("user_app.urls")),
     # path("api/auth/", include("auth_app"))
 ]
 

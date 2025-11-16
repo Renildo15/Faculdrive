@@ -15,7 +15,7 @@ class UserSerializer(serializers.ModelSerializer):
         exclude = ["password", "date_joined", "groups", "user_permissions", "last_login"]
 
 
-class UserStudentRegisterSerializer(serializers.ModelSerializer):
+class UserRegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
 
     def validate_password(self, value: str) -> str:
@@ -40,3 +40,21 @@ class UserStudentRegisterSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(validators=[validate_first_name])
     last_name = serializers.CharField(validators=[validate_last_name])
     username = serializers.CharField(validators=[validate_username])
+
+    class Meta:
+        model = User
+        fields = [
+            "first_name",
+            "last_name",
+            "email",
+            "username",
+            "password",
+        ]
+
+        def create(self, validated_data):
+            password = validated_data.pop("password")
+            user = User(**validated_data)
+            user.set_password(password)
+            user.save()
+
+            return user

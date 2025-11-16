@@ -50,7 +50,7 @@ INSTALLED_APPS = [
     "django_celery_results",
     "django_celery_beat",
     "django_cleanup.apps.CleanupConfig",
-    "user_app",
+    "user_app.apps.UserAppConfig",
     "auth_app",
     "file_app",
     "comment_app"
