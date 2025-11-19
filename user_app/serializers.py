@@ -8,7 +8,79 @@ from rest_framework import serializers
 
 from .validators import *
 
+class UserChangePasswordSerializer(serializers.Serializer):
+    new_password = serializers.CharField(write_only=True)
+    confirm_password = serializers.CharField(write_only=True)
 
+    def validate_new_password(self, value: str) -> str:
+        """
+        Hash value passed by user.
+
+        :param value: password of a user
+        :return: a hashed version of the password
+        """
+
+        pattern = (
+            r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
+        )
+
+        if not re.match(pattern, value):
+            raise serializers.ValidationError(
+                "O campo 'new_password' deve conter ao menos 8 caracteres, uma letra maiúscula, uma letra minúscula e um número"
+            )
+        return make_password(value)
+    
+    def validate(self, data):
+        """
+        Check that the new password and confirm password match.
+
+        :param data: dictionary with new_password and confirm_password
+        :return: validated data if passwords match
+        """
+
+        if data["new_password"] != data["confirm_password"]:
+            raise serializers.ValidationError(
+                {"confirm_password": "As senhas não coincidem."}
+            )
+        return data
+
+class UserResetPasswordConfirmSerializer(serializers.Serializer):
+    email = serializers.EmailField(validators=[EmailValidator])
+    token = serializers.CharField()
+    new_password = serializers.CharField(write_only=True)
+    confirm_password = serializers.CharField(write_only=True)
+
+    def validate_new_password(self, value: str) -> str:
+        """
+        Hash value passed by user.
+
+        :param value: password of a user
+        :return: a hashed version of the password
+        """
+
+        pattern = (
+            r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
+        )
+
+        if not re.match(pattern, value):
+            raise serializers.ValidationError(
+                "O campo 'new_password' deve conter ao menos 8 caracteres, uma letra maiúscula, uma letra minúscula e um número"
+            )
+        return make_password(value)
+    
+    def validate(self, data):
+        """
+        Check that the new password and confirm password match.
+
+        :param data: dictionary with new_password and confirm_password
+        :return: validated data if passwords match
+        """
+
+        if data["new_password"] != data["confirm_password"]:
+            raise serializers.ValidationError(
+                {"confirm_password": "As senhas não coincidem."}
+            )
+        return data
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
