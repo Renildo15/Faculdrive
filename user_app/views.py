@@ -34,6 +34,7 @@ def register_user_view(request):
             "user": UserRegisterSerializer(user).data,
         }
         return Response(data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @extend_schema(

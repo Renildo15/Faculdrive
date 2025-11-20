@@ -28,7 +28,7 @@ class UserChangePasswordSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 "O campo 'new_password' deve conter ao menos 8 caracteres, uma letra maiúscula, uma letra minúscula e um número"
             )
-        return make_password(value)
+        return value
     
     def validate(self, data):
         """
@@ -38,7 +38,15 @@ class UserChangePasswordSerializer(serializers.Serializer):
         :return: validated data if passwords match
         """
 
-        if data["new_password"] != data["confirm_password"]:
+        new = data.get("new_password")
+        confirm = data.get("confirm_password")
+
+        if new is None or confirm is None:
+            raise serializers.ValidationError(
+                "Os campos 'new_password' e 'confirm_password' são obrigatórios."
+            )
+
+        if new != confirm:
             raise serializers.ValidationError(
                 {"confirm_password": "As senhas não coincidem."}
             )

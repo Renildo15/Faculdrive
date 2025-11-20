@@ -1,0 +1,59 @@
+import pytest
+from django.urls import reverse
+
+@pytest.mark.django_db
+def test_register_user_view(api_client):
+    url = reverse("register_user")
+    data = {
+        "username": "newuser",
+        "email": "newuser@email.com",
+        "password": "Senha123!",
+        "first_name": "Renildo",
+        "last_name": "Rabi",
+    }
+
+    response = api_client.post(url, data, format='json')
+
+    print(response.data)
+
+    assert response.status_code == 201
+    assert "access_token" in response.data
+    assert "refresh_token" in response.data
+    assert response.data["user"]["username"] == data["username"]
+    assert response.data["user"]["email"] == data["email"]
+    assert response.data["user"]["first_name"] == data["first_name"]
+    assert response.data["user"]["last_name"] == data["last_name"]
+
+@pytest.mark.django_db
+def test_login(api_client, create_user):
+    user = create_user()
+    url = reverse("token_obtain_pair")
+    data = {
+        "username": user.username,
+        "password": "pass1234",
+    }
+
+    response = api_client.post(url, data, format='json')
+    assert response.status_code == 200
+    assert "access" in response.data
+
+@pytest.mark.django_db
+def test_change_password_view(api_client, create_user):
+    user = create_user()
+    url = reverse("change_password")
+    api_client.force_authenticate(user=user)
+    data = {
+        "new_password": "Senha123!",
+        "confirm_password": "Senha123!",
+    }
+
+    response = api_client.put(url, data, format='json')
+
+    print(response.data)
+
+    assert response.status_code == 200
+    assert response.data["message"] == "Senha alterada com sucesso."
+
+    # Verify that the password was actually changed
+    user.refresh_from_db()
+    assert user.check_password(data["new_password"])
