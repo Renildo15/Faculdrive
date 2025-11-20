@@ -130,3 +130,18 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             user.save()
 
             return user
+
+class UserUpdateSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(validators=[EmailValidator])
+    first_name = serializers.CharField(validators=[validate_first_name])
+    last_name = serializers.CharField(validators=[validate_last_name])
+    username = serializers.CharField(validators=[validate_username])
+
+    class Meta:
+        model = User
+        fields = [
+            "first_name",
+            "last_name",
+            "email",
+            "username",
+        ]

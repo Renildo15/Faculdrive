@@ -161,3 +161,48 @@ def upload_avatar_view(request):
         {"message": "Avatar atualizado com sucesso."},
         status=status.HTTP_200_OK,
     )
+
+
+@extend_schema(
+    responses={200: UserSerializer}
+)
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def who_am_i_view(request):
+    user = request.user
+    serializer = UserSerializer(user)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+@extend_schema(
+    request=UserUpdateSerializer,
+    responses={200: UserSerializer}
+)
+@api_view(["PUT"])
+@permission_classes([IsAuthenticated])
+def update_user_view(request):
+    user = request.user
+    serializer = UserUpdateSerializer(user, data=request.data, partial=True)
+
+    if serializer.is_valid():
+        serializer.save()
+        return Response(
+            {
+                "message": "Usuário atualizado com sucesso.",
+                "user": UserSerializer(user).data,
+            },
+            status=status.HTTP_200_OK,
+        )
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def delete_user_view(request):
+    user = request.user
+    user.delete()
+    data = {
+        "message": "Usuário deletado com sucesso."
+    }
+
+    return Response(data, status=status.HTTP_200_OK)
