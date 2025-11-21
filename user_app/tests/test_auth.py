@@ -57,3 +57,44 @@ def test_change_password_view(api_client, create_user):
     # Verify that the password was actually changed
     user.refresh_from_db()
     assert user.check_password(data["new_password"])
+
+@pytest.mark.django_db
+def test_reset_password_confirm_view(api_client, create_user):
+    user = create_user()
+    url_request = reverse("reset_password_request")
+    url_confirm = reverse("reset_password_confirm")
+
+    # Step 1: Request password reset
+    data_request = {
+        "email": user.email,
+    }
+    response_request = api_client.post(url_request, data_request, format='json')
+    assert response_request.status_code == 200
+    assert response_request.data["message"] == "Instruções para redefinição de senha foram enviadas para o seu email."
+
+    # Simulate receiving the token (in a real scenario, this would be sent via email)
+    from django.contrib.auth.tokens import default_token_generator
+    from django.utils.http import urlsafe_base64_encode
+    from django.utils.encoding import force_bytes
+
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+    token = default_token_generator.make_token(user)
+
+    # Step 2: Confirm password reset
+    data_confirm = {
+        "uid": uid,
+        "token": token,
+        "email": user.email,
+        "new_password": "Senha123!",
+        "confirm_password": "Senha123!",
+    }
+    response_confirm = api_client.post(url_confirm, data_confirm, format='json')
+
+    print(response_confirm.data)
+
+    assert response_confirm.status_code == 200
+    assert response_confirm.data["message"] == "Senha redefinida com sucesso."
+
+    # Verify that the password was actually changed
+    user.refresh_from_db()
+    assert user.check_password(data_confirm["new_password"])

@@ -74,7 +74,7 @@ class UserResetPasswordConfirmSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 "O campo 'new_password' deve conter ao menos 8 caracteres, uma letra maiúscula, uma letra minúscula e um número"
             )
-        return make_password(value)
+        return value
     
     def validate(self, data):
         """

@@ -44,3 +44,54 @@ def test_delete_user_view(api_client, create_user):
     # Verify that the user was actually deleted
     with pytest.raises(user.__class__.DoesNotExist):
         user.__class__.objects.get(id=user.id)
+
+@pytest.mark.django_db
+def test_delete_user_view_unauthenticated(api_client):
+    url = reverse("delete_user")
+
+    response = api_client.delete(url)
+    assert response.status_code == 401  # Unauthorized
+
+@pytest.mark.django_db
+def test_update_user_view(api_client, create_user):
+    user = create_user()
+    api_client.force_authenticate(user=user)
+
+    url = reverse("update_user")
+    new_data = {
+        "first_name": "UpdatedName",
+        "last_name": "UpdatedLastName"
+    }
+
+    response = api_client.put(url, new_data, format='json')
+    assert response.status_code == 200
+    assert response.data["message"] == "Usuário atualizado com sucesso."
+    assert response.data["user"]["first_name"] == "UpdatedName"
+    assert response.data["user"]["last_name"] == "UpdatedLastName"
+
+@pytest.mark.django_db
+def test_update_user_view_bad_request(api_client, create_user):
+    user = create_user()
+    api_client.force_authenticate(user=user)
+
+    url = reverse("update_user")
+    bad_data = {
+        "email": "not-an-email"
+    }
+
+    response = api_client.put(url, bad_data, format='json')
+    assert response.status_code == 400
+
+@pytest.mark.django_db
+def test_update_user_view_invalid_data(api_client, create_user):
+    user = create_user()
+    api_client.force_authenticate(user=user)
+
+    url = reverse("update_user")
+    invalid_data = {
+        "email": "invalidemail"
+    }
+
+    response = api_client.put(url, invalid_data, format='json')
+    assert response.status_code == 400
+    assert "email" in response.data
